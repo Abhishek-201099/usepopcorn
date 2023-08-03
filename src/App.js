@@ -62,16 +62,18 @@ export default function App() {
   const [selectedID,setSelectedID]=useState(null);
 
   useEffect(function(){
+    const controller=new AbortController();
     async function fetchMovieList(){
       try{
       setIsLoading(true);
       setError('');
-      const res=await fetch(`http://www.omdbapi.com/?apikey=${KEY}&s=${query}`);
+      const res=await fetch(`http://www.omdbapi.com/?apikey=${KEY}&s=${query}`,{signal:controller.signal});
       // if(!res.ok) throw new Error('Issue with the network')
       const data=await res.json();
       if(data.Response==='False') throw new Error('Movie not found')
       setMovies(data.Search);
       }catch(err){
+        if(err.name!=='AbortError')
         setError(err.message);
       }finally{
         setIsLoading(false);
@@ -84,7 +86,12 @@ export default function App() {
       return;
     }
 
+    handleClose();
     fetchMovieList();
+
+    return function(){
+      controller.abort();
+    };
   },[query]);
 
   function handleSelect(id){
@@ -267,6 +274,28 @@ function MovieDetails({selectedID,onClose,onAddWatched,watched}){
     }
     fetchMovieDetails();
   },[selectedID])
+
+  useEffect(function(){
+    if(!movie.Title) return;
+    document.title=`Movie | ${movie.Title}`;
+
+    return function(){
+      document.title='usepopcorn';
+    }
+  },[movie.Title]);
+
+  useEffect(function(){
+    function callback(e){
+      if(e.code==='Escape'){
+        onClose();
+      }
+    }
+    document.addEventListener('keydown',callback);
+
+    return function(){
+      document.removeEventListener('keydown',callback);
+    };
+  },[onClose])
 
  return (
   <div className="details">
