@@ -92,7 +92,9 @@ function Logo(){
 function Search({query,setQuery}){
   const inputEl=useRef(null);
 
-  useEffect(function(){inputEl.current.focus()},[]);
+  useEffect(function(){
+    inputEl.current.focus()
+  },[]);
 
   useKey('Enter',function(){
     if(document.activeElement===inputEl.current) return;
